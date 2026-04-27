@@ -157,9 +157,10 @@
     }
 
     function formatTime(d) { 
-      // 由於後端已經處理好台北時區，前端直接顯示即可，避免二次轉換
+      // 根據當前選擇的語言顯示對應的格式
       const date = new Date(d);
-      return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const locale = translations[currentLang].locale;
+      return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
     // 2. 🌍 多國語系 (學習重點：資料驅動 UI)
