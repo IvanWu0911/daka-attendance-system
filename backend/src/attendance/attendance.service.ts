@@ -50,25 +50,29 @@ export class AttendanceService {
     try {
       return await query();
     } catch (error) {
-      console.log('檢測到查詢異常，嘗試自動同步資料結構...', error.message);
+      console.log('檢測到查詢異常，嘗試自動同步資料結構...');
       await this.repo.manager.connection.synchronize();
       return await query();
     }
   }
 
-  // 4. 管理員總表 (精簡 Join 與格式化)
+  // 🚀 修正：直接回傳資料庫的原始時間物件，不要在後端轉字串
   async getAllLogsByDate(date: string) {
     const { start, end } = this.getDayRange(date);
     const raw = await this.repo.createQueryBuilder('att')
       .leftJoin('user', 'u', 'u.id = att.userId')
       .where('att.time BETWEEN :start AND :end', { start, end })
-      .select(['att.id','att.userId','u.name','att.action','att.time','att.lat','att.lng'])
+      .select(['att.id', 'att.userId', 'u.name', 'att.action', 'att.time', 'att.lat', 'att.lng'])
       .orderBy('att.time', 'DESC').getRawMany();
 
     return raw.map(r => ({
-      id: r.att_id, userId: r.att_userId, userName: r.u_name || '未知',
-      action: r.att_action, lat: r.att_lat, lng: r.att_lng,
-      time: new Date(r.att_time).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })
+      id: r.att_id,
+      userId: r.att_userId,
+      userName: r.u_name || '未知',
+      action: r.att_action,
+      lat: r.att_lat,
+      lng: r.att_lng,
+      time: r.att_time // 👈 這裡直接傳原始 Date，不要用 .toLocaleString()
     }));
   }
 
@@ -84,7 +88,7 @@ export class AttendanceService {
     ws.columns = [
       { header: '姓名', key: 'name' }, { header: '動作', key: 'act' }, { header: '時間', key: 'time', width: 25 }
     ];
-    
+
     raw.forEach(r => ws.addRow({
       name: r.u_name, act: r.att_action,
       time: new Date(r.att_time).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })

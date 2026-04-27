@@ -32,9 +32,9 @@ export class Attendance {
   @Column({ default: 'normal' })
   status!: string;
 
-  @Column({ 
-    type: 'timestamp', 
-    default: () => "timezone('Asia/Taipei', now())" 
+  @Column({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP'
   })
   time!: Date;
 }
