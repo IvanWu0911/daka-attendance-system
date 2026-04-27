@@ -307,6 +307,11 @@
 
     // 5. 🗺️ 地圖功能
     let map, marker;
+    function previewLocation() {
+      navigator.geolocation.getCurrentPosition(pos => {
+        showMap(pos.coords.latitude, pos.coords.longitude);
+      }, () => alert('GPS Failed'), { enableHighAccuracy: true });
+    }
     function showMap(lat, lng) {
       toggleModal('mapModal', true);
       if (!map) {
