@@ -156,13 +156,17 @@
       el.classList.toggle('flex', show);
     }
 
-    function formatTime(d) { return new Date(d).toLocaleTimeString(translations[currentLang].locale, { timeZone: 'Asia/Taipei', hour: '2-digit', minute: '2-digit', hour12: true }); }
+    function formatTime(d) { 
+      // 由於後端已經處理好台北時區，前端直接顯示即可，避免二次轉換
+      const date = new Date(d);
+      return date.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
 
     // 2. 🌍 多國語系 (學習重點：資料驅動 UI)
     const translations = {
-      tw: { locale:'zh-TW', loginTitle:"請問您是哪位？", logout:"登出", currentStatusLabel:"狀態：", statusIn:"上班", statusOut:"下班", clockInBtn:"上班打卡", clockOutBtn:"下班打卡", applyLeave:"申請請假", todayLogs:"今日紀錄", historyLogs:"歷史紀錄", currentLocation:"目前位置", loading:"讀取中...", confirmClock:"確定打卡？", leaveDisclaimer:"請假須經審核，確定？", actions:{'上班':'上班','下班':'下班','請假':'請假'}},
-      vn: { locale:'vi-VN', loginTitle:"Bạn là ai?", logout:"Đăng xuất", currentStatusLabel:"Trạng thái:", statusIn:"Đã đi làm", statusOut:"Đã tan làm", clockInBtn:"Bắt đầu", clockOutBtn:"Kết thúc", applyLeave:"Nghỉ phép", todayLogs:"Lịch sử hôm nay", historyLogs:"Lịch sử", currentLocation:"Vị trí", loading:"Đang tải...", confirmClock:"Điểm danh?", leaveDisclaimer:"Cần duyệt, tiếp tục?", actions:{'上班':'Đi làm','下班':'Tan làm','請假':'Nghỉ phép'}},
-      th: { locale:'th-TH', loginTitle:"คุณคือใคร?", logout:"ออกจากระบบ", currentStatusLabel:"สถานะ:", statusIn:"เข้างาน", statusOut:"เลิกงาน", clockInBtn:"ลงเวลาเข้า", clockOutBtn:"ลงเวลาออก", applyLeave:"ขอลาหยุด", todayLogs:"ประวัติวันนี้", historyLogs:"ประวัติ", currentLocation:"ตำแหน่ง", loading:"กำลังโหลด...", confirmClock:"ยืนยัน?", leaveDisclaimer:"ต้องรออนุมัติ ยืนยัน?", actions:{'上班':'เข้างาน','下班':'เลิกงาน','請假':'ลาหยุด'}}
+      tw: { locale:'zh-TW', loginTitle:"請問您是哪位？", logout:"登出", currentStatusLabel:"狀態：", statusIn:"上班", statusOut:"下班", clockInBtn:"上班打卡", clockOutBtn:"下班打卡", applyLeave:"申請請假", todayLogs:"今日紀錄", historyLogs:"歷史紀錄", currentLocation:"目前位置", loading:"處理中...", locing:"定位中...", confirmClock:"確定打卡？", leaveDisclaimer:"請假須經審核，確定？", actions:{'上班':'上班','下班':'下班','請假':'請假'}},
+      vn: { locale:'vi-VN', loginTitle:"Bạn là ai?", logout:"Đăng xuất", currentStatusLabel:"Trạng thái:", statusIn:"Đã đi làm", statusOut:"Đã tan làm", clockInBtn:"Bắt đầu", clockOutBtn:"Kết thúc", applyLeave:"Nghỉ phép", todayLogs:"Lịch sử hôm nay", historyLogs:"Lịch sử", currentLocation:"Vị trí", loading:"Đang xử lý...", locing:"Đang định vị...", confirmClock:"Điểm danh?", leaveDisclaimer:"Cần duyệt, tiếp tục?", actions:{'上班':'Đi làm','下班':'Tan làm','請假':'Nghỉ phép'}},
+      th: { locale:'th-TH', loginTitle:"คุณคือใคร?", logout:"ออกจากระบบ", currentStatusLabel:"สถานะ:", statusIn:"เข้างาน", statusOut:"เลิกงาน", clockInBtn:"ลงเวลาเข้า", clockOutBtn:"ลงเวลาออก", applyLeave:"ขอลาหยุด", todayLogs:"ประวัติวันนี้", historyLogs:"ประวัติ", currentLocation:"ตำแหน่ง", loading:"กำลังประมวลผล...", locing:"กำลังระบุตำแหน่ง...", confirmClock:"ยืนยัน?", leaveDisclaimer:"ต้องรออนุมัติ ยืนยัน?", actions:{'上班':'เข้างาน','下班':'เลิกงาน','請假':'ลาหยุด'}}
     };
 
     function applyLang() {
@@ -170,7 +174,10 @@
         const key = el.getAttribute('data-i18n');
         if (translations[currentLang][key]) el.innerText = translations[currentLang][key];
       });
-      document.getElementById('clockBtn').innerText = currentStatus === '下班' ? translations[currentLang].clockInBtn : translations[currentLang].clockOutBtn;
+      const btn = document.getElementById('clockBtn');
+      if (!btn.disabled) {
+        btn.innerText = currentStatus === '下班' ? translations[currentLang].clockInBtn : translations[currentLang].clockOutBtn;
+      }
       document.getElementById('statusText').innerText = currentStatus === '下班' ? translations[currentLang].statusOut : translations[currentLang].statusIn;
     }
 
@@ -218,6 +225,7 @@
       const data = await api(`/attendance/${currentUser.id}/status`);
       currentStatus = data.status;
       const btn = document.getElementById('clockBtn');
+      btn.disabled = false;
       btn.className = `w-full text-white text-2xl font-bold py-5 rounded-xl shadow-md ${currentStatus==='下班'?'bg-[#f97316]':'bg-[#4353d8]'}`;
       
       const slider = document.getElementById('logSlider'); slider.innerHTML = '';
@@ -232,10 +240,24 @@
 
     function confirmClock() { if (confirm(translations[currentLang].confirmClock)) doClock(); }
     async function doClock() {
+      const btn = document.getElementById('clockBtn');
+      btn.disabled = true;
+      btn.innerText = translations[currentLang].locing;
+
       navigator.geolocation.getCurrentPosition(async pos => {
-        await api('/attendance/clock', 'POST', { userId: currentUser.id, action: currentStatus==='下班'?'上班':'下班', lat: pos.coords.latitude, lng: pos.coords.longitude });
-        fetchStatus();
-      }, () => alert('GPS Failed'), { enableHighAccuracy: true });
+        btn.innerText = translations[currentLang].loading;
+        try {
+          await api('/attendance/clock', 'POST', { userId: currentUser.id, action: currentStatus==='下班'?'上班':'下班', lat: pos.coords.latitude, lng: pos.coords.longitude });
+          fetchStatus();
+        } catch (e) {
+          btn.disabled = false;
+          applyLang();
+        }
+      }, () => {
+        alert('GPS Failed - Timeout or Permission Denied');
+        btn.disabled = false;
+        applyLang();
+      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
     }
 
     function handleLeaveClick() { if (confirm(translations[currentLang].leaveDisclaimer)) toggleModal('leaveModal', true); }
@@ -308,9 +330,20 @@
     // 5. 🗺️ 地圖功能
     let map, marker;
     function previewLocation() {
+      const btn = document.getElementById('locBtn');
+      const oldText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = translations[currentLang].locing;
+
       navigator.geolocation.getCurrentPosition(pos => {
+        btn.disabled = false;
+        btn.innerText = oldText;
         showMap(pos.coords.latitude, pos.coords.longitude);
-      }, () => alert('GPS Failed'), { enableHighAccuracy: true });
+      }, () => {
+        alert('GPS Failed');
+        btn.disabled = false;
+        btn.innerText = oldText;
+      }, { enableHighAccuracy: true, timeout: 10000 });
     }
     function showMap(lat, lng) {
       toggleModal('mapModal', true);
