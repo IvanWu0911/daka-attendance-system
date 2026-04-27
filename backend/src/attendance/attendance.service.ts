@@ -40,12 +40,20 @@ export class AttendanceService {
     }
   }
 
-  // 3. 歷史紀錄 (複用查詢)
+  // 3. 歷史紀錄 (加入自動修復邏輯)
   async getHistoryByDate(userId: number, date: string) {
     const { start, end } = this.getDayRange(date);
-    return this.repo.createQueryBuilder('att')
+    const query = () => this.repo.createQueryBuilder('att')
       .where('att.userId = :userId AND att.time BETWEEN :start AND :end', { userId, start, end })
       .orderBy('att.time', 'ASC').getMany();
+
+    try {
+      return await query();
+    } catch (error) {
+      console.log('檢測到查詢異常，嘗試自動同步資料結構...', error.message);
+      await this.repo.manager.connection.synchronize();
+      return await query();
+    }
   }
 
   // 4. 管理員總表 (精簡 Join 與格式化)
