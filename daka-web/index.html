@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>員工打卡系統 - 精簡學習版</title>
+  <title>打卡系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -95,7 +95,7 @@
 
   <div id="historyModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl w-full max-w-sm border-4 border-black">
-      <div class="flex justify-between mb-4"><h3 class="font-bold">📅 查詢紀錄</h3><button onclick="toggleModal('historyModal', false)">&times;</button></div>
+      <div class="flex justify-between mb-4"><h3 class="font-bold">查詢紀錄</h3><button onclick="toggleModal('historyModal', false)">&times;</button></div>
       <input type="date" id="historyDateInput" class="w-full border-2 p-2 mb-2"><button onclick="fetchHistoryByDate()" class="w-full bg-blue-500 text-white p-2 rounded">搜尋</button>
       <div id="historyResultArea" class="mt-4 max-h-60 overflow-y-auto flex flex-col gap-2"></div>
     </div>
@@ -103,7 +103,7 @@
 
   <div id="leaveModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl w-full max-w-sm border-4 border-black">
-      <h3 class="font-bold mb-4">🏖️ 申請請假</h3>
+      <h3 class="font-bold mb-4">申請請假</h3>
       <div class="flex flex-col gap-2">
         <input type="date" id="leaveStart" class="border-2 p-2"><input type="date" id="leaveEnd" class="border-2 p-2">
         <textarea id="leaveReason" placeholder="理由..." class="border-2 p-2 h-20"></textarea>
@@ -130,7 +130,7 @@
 
   <div id="exportModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl border-4 border-black w-full max-w-sm">
-      <h3 class="font-bold mb-4">📅 匯出 Excel</h3>
+      <h3 class="font-bold mb-4">匯出 Excel</h3>
       <input type="date" id="exportStartDate" class="w-full border-2 p-2 mb-2"><input type="date" id="exportEndDate" class="w-full border-2 p-2 mb-4">
       <button onclick="executeExport()" class="w-full bg-green-500 text-white p-3 rounded font-bold">下載</button>
       <button onclick="toggleModal('exportModal', false)" class="w-full text-gray-400 mt-2">取消</button>
