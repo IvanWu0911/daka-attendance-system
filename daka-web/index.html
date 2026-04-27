@@ -180,9 +180,16 @@
         btn.innerText = currentStatus === '下班' ? translations[currentLang].clockInBtn : translations[currentLang].clockOutBtn;
       }
       document.getElementById('statusText').innerText = currentStatus === '下班' ? translations[currentLang].statusOut : translations[currentLang].statusIn;
+      
+      // 確保動態內容也跟著重新渲染
+      if (currentUser) {
+        if (!document.getElementById('dashboardScreen').classList.contains('hidden')) fetchStatus();
+        if (!document.getElementById('allLogsScreen').classList.contains('hidden')) loadAllLogsByDate();
+        if (!document.getElementById('historyModal').classList.contains('hidden')) fetchHistoryByDate();
+      }
     }
 
-    function setLanguage(l) { currentLang = l; localStorage.setItem('lang', l); applyLang(); toggleModal('langModal', false); init(); }
+    function setLanguage(l) { currentLang = l; localStorage.setItem('lang', l); applyLang(); toggleModal('langModal', false); }
 
     // 3. 👤 使用者功能
     async function init() {
@@ -303,8 +310,9 @@
       const list = document.getElementById('allLogsList'); list.innerHTML = logs.length ? '' : '<div class="text-white text-center">No data</div>';
       logs.forEach(l => {
         const color = l.action==='上班'?'text-orange-500':(l.action==='請假'?'text-blue-500':'text-indigo-600');
+        const translatedAction = translations[currentLang].actions[l.action] || l.action;
         list.innerHTML += `<div class="bg-white p-4 rounded-2xl border-4 border-black relative">
-          <div class="flex items-center gap-3"><span class="text-2xl font-black ${color}">${l.action}</span><span class="text-xl font-black">${l.userName}</span></div>
+          <div class="flex items-center gap-3"><span class="text-2xl font-black ${color}">${translatedAction}</span><span class="text-xl font-black">${l.userName}</span></div>
           <div class="text-lg font-mono text-gray-600">${l.time}</div>
           ${l.lat?`<button onclick="showMap(${l.lat},${l.lng})" class="absolute top-4 right-4 text-2xl">📌</button>`:''}
         </div>`;
