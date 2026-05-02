@@ -37,18 +37,6 @@ export class AttendanceController {
     return this.service.getAllLogsByDate(d);
   }
 
-  @Get('leave/pending')
-  getPendingLeaves(@Req() req: any) {
-    if (req.user.role !== 'admin') throw new ForbiddenException();
-    return this.service.getPendingLeaves();
-  }
-
-  @Patch('leave/:id')
-  reviewLeave(@Param('id') id: string, @Body('isApproved') ok: boolean, @Req() req: any) {
-    if (req.user.role !== 'admin') throw new ForbiddenException();
-    return this.service.approveLeave(Number(id), ok);
-  }
-
   @Get('export')
   async exportExcel(@Query('start') s: string, @Query('end') e: string, @Res() res: any) {
     const wb = await this.service.exportExcel(s, e);

@@ -15,18 +15,49 @@ export class AttendanceService {
 
   // 1. 查詢狀態 (精簡版)
   async getStatus(userId: number) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleString('sv', { timeZone: 'Asia/Taipei' }).split(' ')[0];
     const logs = await this.getHistoryByDate(userId, today);
-    const isClockedIn = logs.length > 0 && logs[logs.length - 1].action === '上班';
+    // 🚀 核心修正：計算「上班/下班/加班」的總數，奇數代表「已打卡/未退打卡」
+    const workLogs = logs.filter(l => l.action !== '請假');
+    const isClockedIn = workLogs.length % 2 !== 0;
     return { status: isClockedIn ? '上班' : '下班', logs };
   }
 
   // 2. 打卡與請假 (加入自動修復資料表功能)
   async clock(userId: number, action: string, lat?: number, lng?: number, leave?: any) {
+    const todayStr = new Date().toLocaleString('sv', { timeZone: 'Asia/Taipei' }).split(' ')[0];
+    const nowTaipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+    const isWeekend = nowTaipei.getDay() === 0 || nowTaipei.getDay() === 6;
+
+    // 🚀 更直觀的判斷：獲取當天最後一筆非請假紀錄
+    const todayLogs = await this.repo.createQueryBuilder('att')
+      .where('att.userId = :userId AND att.action != :leave AND DATE(att.time AT TIME ZONE \'UTC\' AT TIME ZONE \'Asia/Taipei\') = :today', { userId, leave: '請假', today: todayStr })
+      .orderBy('att.time', 'DESC')
+      .getMany();
+
+    const lastLog = todayLogs[0];
+    let finalAction = action;
+    let overtimeValue = '';
+    
+    // 🚀 邏輯修正：
+    // 1. 如果不是「請假」，且滿足週末或當天已有 2 筆紀錄，則標註為加班
+    if (action !== '請假' && (isWeekend || todayLogs.length >= 2)) {
+      overtimeValue = '加班';
+    }
+
+    // 2. 保持 finalAction 為前端傳入的動作（上班/下班/請假）
+
+    console.log(`[DEBUG] LastAction: ${lastLog?.action || 'None'}, NewAction: ${action}, Overtime: ${overtimeValue}`);
+
     const saveRecord = () => this.repo.save({
-      userId, action, lat, lng,
-      startDate: leave?.startDate, endDate: leave?.endDate, reason: leave?.reason,
-      status: action === '請假' ? 'pending' : 'normal'
+      userId, 
+      action: finalAction, 
+      lat, 
+      lng,
+      startDate: leave?.startDate, 
+      endDate: leave?.endDate, 
+      overtime: overtimeValue,
+      time: new Date()
     });
 
     try {
@@ -86,16 +117,18 @@ export class AttendanceService {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('紀錄');
     ws.columns = [
-      { header: '姓名', key: 'name' }, { header: '動作', key: 'act' }, { header: '時間', key: 'time', width: 25 }
+      { header: '姓名', key: 'name' }, 
+      { header: '動作', key: 'act' }, 
+      { header: '是否加班', key: 'ot' },
+      { header: '時間', key: 'time', width: 25 }
     ];
 
     raw.forEach(r => ws.addRow({
-      name: r.u_name, act: r.att_action,
+      name: r.u_name, 
+      act: r.att_action,
+      ot: r.att_overtime || '',
       time: new Date(r.att_time).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })
     }));
     return wb;
   }
-
-  async getPendingLeaves() { return this.repo.find({ where: { action: '請假', status: 'pending' }, order: { time: 'ASC' } }); }
-  async approveLeave(id: number, ok: boolean) { return this.repo.update(id, { status: ok ? 'approved' : 'rejected' }); }
 }

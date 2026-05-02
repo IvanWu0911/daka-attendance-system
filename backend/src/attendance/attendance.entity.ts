@@ -8,8 +8,7 @@ export class Attendance {
   @Column()
   userId!: number;
 
-  // action 會多一個選項：'上班', '下班', '請假'
-  @Column()
+  @Column({ type: 'text' }) // 🚀 強制使用 text 類型，避開資料庫可能存在的 ENUM 限制
   action!: string;
 
   @Column({ type: 'float', nullable: true })
@@ -25,12 +24,9 @@ export class Attendance {
   @Column({ nullable: true })
   endDate!: string;
 
-  @Column({ nullable: true })
-  reason!: string;
-
-  // 狀態：'normal' (一般打卡), 'pending' (待審核), 'approved', 'rejected'
-  @Column({ default: 'normal' })
-  status!: string;
+  // 🚀 新增：加班欄位，符合條件寫「加班」，否則為空字串
+  @Column({ default: '' })
+  overtime!: string;
 
   @Column({
     type: 'timestamptz',

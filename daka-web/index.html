@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>打卡系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -34,95 +36,99 @@
 
   <!-- 2. 使用者儀表板 -->
   <div id="dashboardScreen"
-    class="hidden w-full max-w-[420px] bg-white h-screen sm:h-auto sm:rounded-3xl shadow-2xl flex flex-col p-6">
-    <div class="flex justify-between mb-6">
+    class="hidden w-full max-w-[420px] bg-white h-screen sm:h-[700px] sm:rounded-3xl shadow-2xl flex flex-col p-6">
+    <div class="flex justify-between mb-4 shrink-0">
       <h2 id="welcomeName" class="text-4xl font-black text-[#4353d8] italic">Name</h2>
       <div class="flex gap-2">
         <button onclick="logout()" class="text-xs bg-gray-100 p-2 rounded-md" data-i18n="logout">登出</button>
         <button onclick="toggleModal('langModal', true)" class="text-xl">🌐</button>
       </div>
     </div>
-    <div class="text-center mb-6">
-      <div id="clock" class="text-5xl font-mono font-black text-gray-800 tracking-widest">00:00:00</div>
-      <div class="text-sm mt-2"><span data-i18n="currentStatusLabel">狀態：</span><span id="statusText"
-          class="font-bold text-[#4353d8]">下班</span></div>
-    </div>
-    <div class="flex flex-col gap-4 mb-6">
+
+    <!-- 上半部：核心操作區 -->
+    <div class="flex flex-col gap-4 mb-6 shrink-0">
+      <div class="text-center">
+        <div id="clock" class="text-5xl font-mono font-black text-gray-800 tracking-widest leading-none">00:00:00</div>
+        <div class="text-sm mt-2"><span data-i18n="currentStatusLabel">狀態：</span><span id="statusText" class="font-bold text-[#4353d8]">下班</span></div>
+      </div>
+      
       <button id="clockBtn" onclick="confirmClock()"
-        class="w-full text-white text-2xl font-bold py-5 rounded-xl shadow-md transition-all active:scale-95"></button>
-      <button onclick="handleLeaveClick()" class="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl"
+        class="w-full h-24 text-white text-3xl font-bold rounded-2xl shadow-xl transition-all active:scale-95"></button>
+      
+      <button onclick="handleLeaveClick()" class="w-full bg-gray-100 text-gray-600 font-bold py-4 rounded-2xl text-lg"
         data-i18n="applyLeave">申請請假</button>
     </div>
-    <div class="flex gap-4 h-[220px]">
-      <div class="w-1/2 flex flex-col">
-        <h2 class="text-sm font-bold text-gray-600 mb-2" data-i18n="todayLogs">今日紀錄</h2>
-        <div id="logSlider"
-          class="bg-[#5bc2f4] rounded-2xl p-3 flex-1 overflow-y-auto blue-scrollbar flex flex-col gap-3 shadow-inner">
-        </div>
+
+    <!-- 下半部：紀錄與按鈕 (標題獨立一行以達成對齊) -->
+    <h2 class="text-xs font-bold text-gray-600 mb-2 shrink-0" data-i18n="todayLogs">今日紀錄</h2>
+    
+    <div class="flex gap-4 flex-1 min-h-0">
+      <!-- 左：今日紀錄藍色框 (直接作為 flex 子項目以達成對齊) -->
+      <div id="logSlider"
+        class="w-1/2 bg-[#5bc2f4] rounded-3xl p-3 overflow-y-auto blue-scrollbar flex flex-col gap-3 shadow-inner">
       </div>
-      <div class="w-1/2 flex flex-col justify-end gap-4">
+      
+      <!-- 右：功能按鈕 (與左側藍色框頂部對齊) -->
+      <div class="w-1/2 flex flex-col gap-4">
         <button onclick="toggleModal('historyModal', true)"
-          class="w-full border-4 border-black rounded-2xl py-5 bg-white font-bold" data-i18n="historyLogs">歷史紀錄</button>
+          class="flex-1 border-4 border-black rounded-3xl bg-white font-bold text-xl active:scale-95 transition-all shadow-md px-1" data-i18n="historyLogs">歷史紀錄</button>
         <button onclick="previewLocation()" id="locBtn"
-          class="w-full border-4 border-black rounded-2xl py-5 bg-white font-bold"
-          data-i18n="currentLocation">目前位置</button>
+          class="flex-1 border-4 border-black rounded-3xl bg-white font-bold text-xl active:scale-95 transition-all shadow-md px-1" data-i18n="currentLocation">目前位置</button>
       </div>
     </div>
   </div>
 
   <!-- 3. 管理員後台 -->
   <div id="adminScreen"
-    class="hidden w-full max-w-[420px] bg-[#5bc2f4] h-screen sm:h-auto sm:rounded-3xl shadow-2xl flex flex-col p-6">
-    <div class="flex justify-between mb-6 text-white">
-      <h2 class="text-3xl font-black">管理後台</h2><button onclick="logout()"
-        class="bg-white text-blue-500 font-bold px-4 py-2 rounded-lg">登出</button>
+    class="hidden w-full max-w-[420px] bg-[#5bc2f4] h-screen sm:h-[700px] sm:rounded-3xl shadow-2xl flex flex-col p-6">
+    <div class="flex justify-between mb-6 text-white shrink-0">
+      <h2 class="text-3xl font-black" data-i18n="adminBackTitle">管理後台</h2><button onclick="logout()"
+        class="bg-white text-blue-500 font-bold px-4 py-2 rounded-lg" data-i18n="logout">登出</button>
     </div>
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-6 flex-1 mb-2">
       <button onclick="showAdminSub('allLogsScreen', loadAllLogsByDate)"
-        class="bg-white p-6 rounded-2xl border-4 border-black font-bold">📋 全部打卡紀錄</button>
+        class="bg-white p-6 rounded-2xl border-4 border-black font-bold flex-1 text-2xl active:scale-95 transition-all" data-i18n="allLogs">全部打卡紀錄</button>
       <button onclick="showAdminSub('employeeManageScreen', loadEmployees)"
-        class="bg-white p-6 rounded-2xl border-4 border-black font-bold">👥 管理員工</button>
-      <button onclick="showAdminSub('leaveReviewScreen', loadPendingLeaves)"
-        class="bg-yellow-100 p-6 rounded-2xl border-4 border-black font-bold">🏖️ 審核假單</button>
+        class="bg-white p-6 rounded-2xl border-4 border-black font-bold flex-1 text-2xl active:scale-95 transition-all" data-i18n="manageEmployees">管理員工</button>
       <button onclick="toggleModal('exportModal', true)"
-        class="bg-green-100 p-6 rounded-2xl border-4 border-black font-bold">📊 匯出 Excel</button>
+        class="bg-green-100 p-6 rounded-2xl border-4 border-black font-bold flex-1 text-2xl active:scale-95 transition-all" data-i18n="exportExcel">匯出 Excel</button>
     </div>
   </div>
 
   <!-- 4. 子畫面 (打卡紀錄、員工管理等) -->
   <div id="allLogsScreen" class="hidden fixed inset-0 bg-[#5bc2f4] p-6 overflow-y-auto">
-    <button onclick="hideAdminSub('allLogsScreen')" class="text-white font-bold mb-4 text-lg">⬅️ 返回</button>
-    <input type="date" id="adminSearchDate" onchange="loadAllLogsByDate()"
-      class="w-full p-3 rounded-xl border-2 border-black mb-4">
-    <div id="allLogsList" class="flex flex-col gap-4"></div>
+    <button onclick="hideAdminSub('allLogsScreen')" class="bg-white text-blue-500 font-bold px-6 py-2 rounded-xl mb-6 shadow-md active:scale-95 transition-all" data-i18n="back">返回</button>
+    <div class="bg-white p-4 rounded-3xl border-4 border-black mb-4 flex flex-col gap-4 shadow-xl">
+      <input type="date" id="adminSearchDate" onchange="loadAllLogsByDate()"
+        class="w-full p-3 rounded-xl border-2 border-black font-bold">
+      <div class="relative h-[400px] w-full">
+        <canvas id="ganttChart"></canvas>
+      </div>
+    </div>
+    <div id="allLogsList" class="hidden"></div>
   </div>
 
   <div id="employeeManageScreen" class="hidden fixed inset-0 bg-[#5bc2f4] p-6 overflow-y-auto">
-    <button onclick="hideAdminSub('employeeManageScreen')" class="text-white font-bold mb-4">⬅️ 返回</button>
+    <button onclick="hideAdminSub('employeeManageScreen')" class="bg-white text-blue-500 font-bold px-6 py-2 rounded-xl mb-6 shadow-md active:scale-95 transition-all" data-i18n="back">返回</button>
     <div id="employeeList" class="flex flex-col gap-4"></div>
     <button onclick="toggleModal('addUserModal', true)"
-      class="mt-4 w-full bg-white p-4 rounded-2xl border-4 border-black font-bold">➕ 新增員工</button>
-  </div>
-
-  <div id="leaveReviewScreen" class="hidden fixed inset-0 bg-[#5bc2f4] p-6 overflow-y-auto">
-    <button onclick="hideAdminSub('leaveReviewScreen')" class="text-white font-bold mb-4">⬅️ 返回</button>
-    <div id="pendingLeaveList" class="flex flex-col gap-4"></div>
+      class="mt-4 w-full bg-white p-4 rounded-2xl border-4 border-black font-bold" data-i18n="addNewUser">➕ 新增員工</button>
   </div>
 
   <!-- 5. 共同彈窗 (Modals) -->
   <div id="addUserModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl w-full max-w-sm border-4 border-black relative">
       <button onclick="toggleModal('addUserModal', false)" class="absolute top-2 right-4 text-3xl">&times;</button>
-      <h3 class="text-xl font-bold mb-4">➕ 新增員工</h3>
+      <h3 class="text-xl font-bold mb-4" data-i18n="addNewUser">➕ 新增員工</h3>
       <div class="flex flex-col gap-3">
-        <input type="text" id="newUserName" placeholder="姓名" class="border-2 p-2 rounded">
+        <input type="text" id="newUserName" placeholder="姓名" class="border-2 p-2 rounded" data-placeholder="namePlaceholder">
         <input type="date" id="newUserStartDate" class="border-2 p-2 rounded">
-        <input type="password" id="newUserPwd" placeholder="密碼" class="border-2 p-2 rounded">
+        <input type="password" id="newUserPwd" placeholder="密碼" class="border-2 p-2 rounded" data-placeholder="pwdPlaceholder">
         <select id="newUserRole" class="border-2 p-2 rounded">
           <option value="user">user</option>
           <option value="admin">admin</option>
         </select>
-        <button onclick="submitNewUser()" class="bg-blue-500 text-white p-3 rounded-xl font-bold">儲存</button>
+        <button onclick="submitNewUser()" class="bg-blue-500 text-white p-3 rounded-xl font-bold" data-i18n="save">儲存</button>
       </div>
     </div>
   </div>
@@ -130,22 +136,21 @@
   <div id="historyModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl w-full max-w-sm border-4 border-black">
       <div class="flex justify-between mb-4">
-        <h3 class="font-bold">查詢紀錄</h3><button onclick="toggleModal('historyModal', false)">&times;</button>
+        <h3 class="font-bold" data-i18n="historyLogs">歷史紀錄</h3><button onclick="toggleModal('historyModal', false)">&times;</button>
       </div>
       <input type="date" id="historyDateInput" class="w-full border-2 p-2 mb-2"><button onclick="fetchHistoryByDate()"
-        class="w-full bg-blue-500 text-white p-2 rounded">搜尋</button>
+        class="w-full bg-blue-500 text-white p-2 rounded" data-i18n="search">搜尋</button>
       <div id="historyResultArea" class="mt-4 max-h-60 overflow-y-auto flex flex-col gap-2"></div>
     </div>
   </div>
 
   <div id="leaveModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl w-full max-w-sm border-4 border-black">
-      <h3 class="font-bold mb-4">申請請假</h3>
+      <h3 class="font-bold mb-4" data-i18n="applyLeave">申請請假</h3>
       <div class="flex flex-col gap-2">
         <input type="date" id="leaveStart" class="border-2 p-2"><input type="date" id="leaveEnd" class="border-2 p-2">
-        <textarea id="leaveReason" placeholder="理由..." class="border-2 p-2 h-20"></textarea>
-        <button onclick="submitLeave()" class="bg-orange-500 text-white p-3 rounded">送出</button>
-        <button onclick="toggleModal('leaveModal', false)" class="text-gray-400 mt-2">取消</button>
+        <button onclick="submitLeave()" class="bg-orange-500 text-white p-3 rounded" data-i18n="submit">送出</button>
+        <button onclick="toggleModal('leaveModal', false)" class="text-gray-400 mt-2" data-i18n="cancel">取消</button>
       </div>
     </div>
   </div>
@@ -168,16 +173,16 @@
 
   <div id="exportModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-3xl border-4 border-black w-full max-w-sm">
-      <h3 class="font-bold mb-4">匯出 Excel</h3>
+      <h3 class="font-bold mb-4" data-i18n="exportExcel">匯出 Excel</h3>
       <input type="date" id="exportStartDate" class="w-full border-2 p-2 mb-2"><input type="date" id="exportEndDate"
         class="w-full border-2 p-2 mb-4">
-      <button onclick="executeExport()" class="w-full bg-green-500 text-white p-3 rounded font-bold">下載</button>
-      <button onclick="toggleModal('exportModal', false)" class="w-full text-gray-400 mt-2">取消</button>
+      <button onclick="executeExport()" class="w-full bg-green-500 text-white p-3 rounded font-bold" data-i18n="download">下載</button>
+      <button onclick="toggleModal('exportModal', false)" class="w-full text-gray-400 mt-2" data-i18n="cancel">取消</button>
     </div>
   </div>
 
   <script>
-    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://daka-p664.onrender.com/api';
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3000/api' : 'https://daka-p664.onrender.com/api';
     let currentUser = null, currentStatus = '下班', currentLang = localStorage.getItem('lang') || 'tw';
 
     // 1. 🛠️ 通用工具函式
@@ -216,9 +221,9 @@
 
     // 2. 🌍 多國語系
     const translations = {
-      tw: { locale: 'zh-TW', loginTitle: "請問您是哪位？", logout: "登出", currentStatusLabel: "狀態：", statusIn: "上班", statusOut: "下班", clockInBtn: "上班打卡", clockOutBtn: "下班打卡", applyLeave: "申請請假", todayLogs: "今日紀錄", historyLogs: "歷史紀錄", currentLocation: "目前位置", loading: "處理中...", locing: "定位中...", confirmClock: "確定打卡？", leaveDisclaimer: "請假須經審核，確定？", actions: { '上班': '上班', '下班': '下班', '請假': '請假' } },
-      vn: { locale: 'vi-VN', loginTitle: "Bạn là ai?", logout: "Đăng xuất", currentStatusLabel: "Trạng thái:", statusIn: "Đã đi làm", statusOut: "Đã tan làm", clockInBtn: "Bắt đầu", clockOutBtn: "Kết thúc", applyLeave: "Nghỉ phép", todayLogs: "Lịch sử hôm nay", historyLogs: "Lịch sử", currentLocation: "Vị trí", loading: "Đang xử lý...", locing: "Đang định vị...", confirmClock: "Điểm danh?", leaveDisclaimer: "Cần duyệt, tiếp tục?", actions: { '上班': 'Đi làm', '下班': 'Tan làm', '請假': 'Nghỉ phép' } },
-      th: { locale: 'th-TH', loginTitle: "คุณคือใคร?", logout: "ออกจากระบบ", currentStatusLabel: "สถานะ:", statusIn: "เข้างาน", statusOut: "เลิกงาน", clockInBtn: "ลงเวลาเข้า", clockOutBtn: "ลงเวลาออก", applyLeave: "ขอลาหยุด", todayLogs: "ประวัติวันนี้", historyLogs: "ประวัติ", currentLocation: "ตำแหน่ง", loading: "กำลังประมวลผล...", locing: "กำลังระบุตำแหน่ง...", confirmClock: "ยืนยัน?", leaveDisclaimer: "ต้องรออนุมัติ ยืนยัน?", actions: { '上班': 'เข้างาน', '下班': 'เลิกงาน', '請假': 'ลาหยุด' } }
+      tw: { locale: 'zh-TW', loginTitle: "請問您是哪位？", logout: "登出", currentStatusLabel: "狀態：", statusIn: "上班", statusOut: "下班", clockInBtn: "上班打卡", clockOutBtn: "下班打卡", applyLeave: "申請請假", todayLogs: "今日紀錄", historyLogs: "歷史紀錄", currentLocation: "目前位置", loading: "處理中...", locing: "定位中...", confirmClock: "確定打卡？", leaveDisclaimer: "請假須經審核，確定？", actions: { '上班': '上班', '下班': '下班', '請假': '請假', '加班': '加班' }, adminBackTitle: "管理後台", allLogs: "全部打卡紀錄", manageEmployees: "管理員工", exportExcel: "匯出 Excel", back: "返回", addNewUser: "➕ 新增員工", namePlaceholder: "姓名", pwdPlaceholder: "密碼", save: "儲存", search: "搜尋", submit: "送出", cancel: "取消", download: "下載", ok: "完成", gpsFailed: "GPS 定位失敗", noData: "無紀錄", employmentDuration: "已入職" },
+      vn: { locale: 'vi-VN', loginTitle: "Bạn là ai?", logout: "Đăng xuất", currentStatusLabel: "Trạng thái:", statusIn: "Đã đi làm", statusOut: "Đã tan làm", clockInBtn: "Bắt đầu", clockOutBtn: "Kết thúc", applyLeave: "Nghỉ phép", todayLogs: "Lịch sử hôm nay", historyLogs: "Lịch sử", currentLocation: "Vị trí", loading: "Đang xử lý...", locing: "Đang định vị...", confirmClock: "Điểm danh?", leaveDisclaimer: "Cần duyệt, tiếp tục?", actions: { '上班': 'Đi làm', '下班': 'Tan làm', '請假': 'Nghỉ phép', '加班': 'Tăng ca' }, adminBackTitle: "Quản trị", allLogs: "Tất cả hồ sơ", manageEmployees: "Quản lý nhân viên", exportExcel: "Xuất Excel", back: "Trở lại", addNewUser: "➕ Thêm nhân viên", namePlaceholder: "Tên", pwdPlaceholder: "Mật khẩu", save: "Lưu", search: "Tìm kiếm", submit: "Gửi", cancel: "Hủy bỏ", download: "Tải về", ok: "Thành công", gpsFailed: "Lỗi GPS", noData: "Không có dữ liệu", employmentDuration: "Đã làm việc" },
+      th: { locale: 'th-TH', loginTitle: "คุณคือใคร?", logout: "ออกจากระบบ", currentStatusLabel: "สถานะ:", statusIn: "เข้างาน", statusOut: "เลิกงาน", clockInBtn: "ลงเวลาเข้า", clockOutBtn: "ลงเวลาออก", applyLeave: "ขอลาหยุด", todayLogs: "ประวัติวันนี้", historyLogs: "ประวัติ", currentLocation: "ตำแหน่ง", loading: "กำลังประมวลผล...", locing: "กำลังระบุตำแหน่ง...", confirmClock: "ยืนยัน?", leaveDisclaimer: "ต้องรออนุมัติ ยืนยัน?", actions: { '上班': 'เข้างาน', '下班': 'เลิกงาน', '請假': 'ลาหยุด', '加班': 'โอที' }, adminBackTitle: "ระบบหลังบ้าน", allLogs: "บันทึกทั้งหมด", manageEmployees: "จัดการพนักงาน", exportExcel: "ส่งออก Excel", back: "กลับ", addNewUser: "➕ เพิ่มพนักงาน", namePlaceholder: "ชื่อ", pwdPlaceholder: "รหัสผ่าน", save: "บันทึก", search: "ค้นหา", submit: "ส่ง", cancel: "ยกเลิก", download: "ดาวน์โหลด", ok: "เสร็จสิ้น", gpsFailed: "GPS ล้มเหลว", noData: "ไม่มีข้อมูล", employmentDuration: "ทำงานมาแล้ว" }
     };
 
     function applyLang() {
@@ -226,20 +231,32 @@
         const key = el.getAttribute('data-i18n');
         if (translations[currentLang][key]) el.innerText = translations[currentLang][key];
       });
+      document.querySelectorAll('[data-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-placeholder');
+        if (translations[currentLang][key]) el.placeholder = translations[currentLang][key];
+      });
       const btn = document.getElementById('clockBtn');
-      if (!btn.disabled) {
+      if (btn && !btn.disabled) {
         btn.innerText = currentStatus === '下班' ? translations[currentLang].clockInBtn : translations[currentLang].clockOutBtn;
       }
-      document.getElementById('statusText').innerText = currentStatus === '下班' ? translations[currentLang].statusOut : translations[currentLang].statusIn;
-
-      if (currentUser) {
-        if (!document.getElementById('dashboardScreen').classList.contains('hidden')) fetchStatus();
-        if (!document.getElementById('allLogsScreen').classList.contains('hidden')) loadAllLogsByDate();
-        if (!document.getElementById('historyModal').classList.contains('hidden')) fetchHistoryByDate();
-      }
+      const st = document.getElementById('statusText');
+      if (st) st.innerText = currentStatus === '下班' ? translations[currentLang].statusOut : translations[currentLang].statusIn;
     }
 
-    function setLanguage(l) { currentLang = l; localStorage.setItem('lang', l); applyLang(); toggleModal('langModal', false); }
+    function setLanguage(l) { 
+      currentLang = l; 
+      localStorage.setItem('lang', l); 
+      applyLang(); 
+      if (currentUser) {
+        // 🚀 只要在儀表板，就更新今日狀態
+        if (!document.getElementById('dashboardScreen').classList.contains('hidden')) fetchStatus();
+        // 🚀 只要在管理員，就更新圖表
+        if (!document.getElementById('allLogsScreen').classList.contains('hidden')) loadAllLogsByDate();
+        // 🚀 不論彈窗是否開啟，只要有紀錄就重新渲染歷史區域 (解決翻譯同步問題)
+        renderHistoryArea();
+      }
+      toggleModal('langModal', false); 
+    }
 
     // 3. 👤 使用者功能
     async function init() {
@@ -283,14 +300,24 @@
       const data = await api(`/attendance/${currentUser.id}/status`);
       currentStatus = data.status;
       const btn = document.getElementById('clockBtn');
-      btn.disabled = false;
-      btn.className = `w-full text-white text-2xl font-bold py-5 rounded-xl shadow-md ${currentStatus === '下班' ? 'bg-[#f97316]' : 'bg-[#4353d8]'}`;
+      if (btn) {
+        btn.disabled = false;
+        btn.className = `w-full text-white text-2xl font-bold py-5 rounded-xl shadow-md ${currentStatus === '下班' ? 'bg-[#f97316]' : 'bg-[#4353d8]'}`;
+      }
 
       const slider = document.getElementById('logSlider'); slider.innerHTML = '';
+      // 🚀 比例邏輯：1-2 個站 50%，2 個以上站 25%
+      const cardHeightClass = data.logs.length <= 2 ? 'h-[calc(50%-0.5rem)]' : 'h-[calc(25%-0.75rem)]';
+      
       data.logs.forEach(l => {
-        const card = document.createElement('div'); card.className = 'bg-white rounded-xl p-3 flex justify-between items-center shadow-sm';
-        card.innerHTML = `<div><div class="text-xs font-black">${translations[currentLang].actions[l.action]}</div><div class="text-lg font-bold whitespace-nowrap">${formatTime(l.time)}</div></div>` +
-          (l.lat ? `<button onclick="showMap(${l.lat},${l.lng})" class="text-xl">📌</button>` : '');
+        const card = document.createElement('div'); 
+        card.className = `bg-white rounded-xl p-3 flex justify-between items-center shadow-sm shrink-0 ${cardHeightClass}`;
+        // 🚀 翻譯邏輯：優先找對應翻譯，找不到則顯示原始文字
+        const actionText = translations[currentLang].actions[l.action] || l.action;
+        const overtimeText = l.overtime === '加班' ? `(${translations[currentLang].actions['加班'] || '加班'})` : '';
+        
+        card.innerHTML = `<div><div class="text-xs font-black">${actionText}${overtimeText}</div><div class="text-lg font-bold whitespace-nowrap">${formatTime(l.time)}</div></div>` +
+          (l.lat ? `<button onclick="showMap(${l.lat},${l.lng})" class="bg-blue-50 hover:bg-blue-100 p-2 rounded-xl shadow-sm active:scale-90 transition-all text-xl">📌</button>` : '');
         slider.appendChild(card);
       });
       applyLang();
@@ -312,7 +339,7 @@
           applyLang();
         }
       }, () => {
-        alert('GPS Failed - Timeout or Permission Denied');
+        alert(translations[currentLang].gpsFailed);
         btn.disabled = false;
         applyLang();
       }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
@@ -320,20 +347,71 @@
 
     function handleLeaveClick() { if (confirm(translations[currentLang].leaveDisclaimer)) toggleModal('leaveModal', true); }
     async function submitLeave() {
-      await api('/attendance/leave', 'POST', { userId: currentUser.id, startDate: document.getElementById('leaveStart').value, endDate: document.getElementById('leaveEnd').value, reason: document.getElementById('leaveReason').value });
-      alert('OK'); toggleModal('leaveModal', false);
+      const start = document.getElementById('leaveStart').value;
+      const end = document.getElementById('leaveEnd').value;
+      
+      if (!start || !end) {
+        alert(currentLang === 'tw' ? '送出失敗，請填寫起始與結束日期' : 
+              (currentLang === 'vn' ? 'Gửi thất bại, vui lòng điền ngày bắt đầu và kết thúc' : 
+              'การส่งล้มเหลว โปรดกรอกวันที่เริ่มต้นและสิ้นสุด'));
+        return;
+      }
+
+      await api('/attendance/leave', 'POST', { userId: currentUser.id, startDate: start, endDate: end });
+      alert(translations[currentLang].ok); toggleModal('leaveModal', false);
+      fetchStatus();
     }
 
+    let currentHistoryLogs = [];
     async function fetchHistoryByDate() {
       const date = document.getElementById('historyDateInput').value; if (!date) return;
-      const logs = await api(`/attendance/${currentUser.id}/history?date=${date}`);
-      const area = document.getElementById('historyResultArea'); area.innerHTML = logs.length ? '' : 'No data';
-      logs.forEach(l => {
-        area.innerHTML += `<div class="bg-gray-100 p-2 rounded flex justify-between"><span>${translations[currentLang].actions[l.action]} ${formatTime(l.time)}</span>${l.lat ? `<button onclick="showMap(${l.lat},${l.lng})">📌</button>` : ''}</div>`;
+      currentHistoryLogs = await api(`/attendance/${currentUser.id}/history?date=${date}`);
+      renderHistoryArea();
+    }
+
+    function renderHistoryArea() {
+      const area = document.getElementById('historyResultArea'); 
+      if (!area) return;
+      area.innerHTML = currentHistoryLogs.length ? '' : translations[currentLang].noData;
+      currentHistoryLogs.forEach(l => {
+        const actionText = translations[currentLang].actions[l.action] || l.action;
+        const overtimeText = l.overtime === '加班' ? `(${translations[currentLang].actions['加班']})` : '';
+        area.innerHTML += `<div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center shadow-sm"><span>${actionText}${overtimeText} ${formatTime(l.time)}</span>${l.lat ? `<button onclick="showMap(${l.lat},${l.lng})" class="bg-white hover:bg-gray-100 p-2 rounded-xl shadow-sm active:scale-90 transition-all text-xl">📌</button>` : ''}</div>`;
       });
     }
 
     // 4. 🛠️ 管理員功能
+    function getEmploymentDuration(startDateStr) {
+      if (!startDateStr) return '-';
+      const start = new Date(startDateStr);
+      const now = new Date();
+      
+      let years = now.getFullYear() - start.getFullYear();
+      let months = now.getMonth() - start.getMonth();
+      let days = now.getDate() - start.getDate();
+
+      if (days < 0) {
+        months--;
+        const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        days += lastMonth.getDate();
+      }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      const t = translations[currentLang];
+      if (years === 0 && months === 0) {
+        const diffDays = Math.floor(Math.abs(now - start) / (1000 * 60 * 60 * 24));
+        return `${t.employmentDuration}${diffDays}${currentLang === 'tw' ? '天' : (currentLang === 'vn' ? ' ngày' : ' วัน')}`;
+      }
+
+      let res = t.employmentDuration;
+      if (years > 0) res += `${years}${currentLang === 'tw' ? '年' : (currentLang === 'vn' ? ' năm' : ' ปี')}`;
+      if (months > 0) res += `${months}${currentLang === 'tw' ? '個月' : (currentLang === 'vn' ? ' tháng' : ' เดือน')}`;
+      return res;
+    }
+
     function showAdminSub(id, callback) { document.getElementById('adminScreen').classList.add('hidden'); document.getElementById(id).classList.remove('hidden'); if (callback) callback(); }
     function hideAdminSub(id) { document.getElementById(id).classList.add('hidden'); document.getElementById('adminScreen').classList.remove('hidden'); }
 
@@ -341,45 +419,112 @@
       const users = await api('/users');
       const list = document.getElementById('employeeList'); list.innerHTML = '';
       users.forEach(u => {
-        list.innerHTML += `<div class="bg-white p-4 rounded-2xl border-4 border-black flex items-center gap-4">
-          <div class="w-12 h-12 rounded-lg flex items-center justify-center text-white font-black ${u.role === 'admin' ? 'bg-blue-500' : 'bg-pink-500'} border-2 border-black">${u.role === 'admin' ? '👨‍💻' : u.name[0]}</div>
-          <div class="flex flex-col"><span class="text-xl font-black">${u.name}</span><span class="text-xs text-gray-400">到職: ${u.startDate || '-'}</span></div>
-        </div>`;
+        const div = document.createElement('div');
+        div.className = 'bg-white p-4 rounded-2xl border-4 border-black flex items-center gap-4';
+        div.innerHTML = `<div class="w-12 h-12 rounded-lg flex items-center justify-center text-white font-black ${u.role === 'admin' ? 'bg-blue-500' : 'bg-pink-500'} border-2 border-black">${u.role === 'admin' ? '👨‍💻' : u.name[0]}</div>
+          <div class="flex flex-col"><span class="text-xl font-black">${u.name}</span><span class="text-xs text-gray-400">${getEmploymentDuration(u.startDate)}</span></div>`;
+        list.appendChild(div);
       });
     }
 
     async function submitNewUser() {
       await api('/users/register', 'POST', { name: document.getElementById('newUserName').value, startDate: document.getElementById('newUserStartDate').value, password: document.getElementById('newUserPwd').value, role: document.getElementById('newUserRole').value });
-      alert('OK'); toggleModal('addUserModal', false); loadEmployees();
+      alert(translations[currentLang].ok); toggleModal('addUserModal', false); loadEmployees();
     }
 
+    let ganttChart = null;
     async function loadAllLogsByDate() {
-      const date = document.getElementById('adminSearchDate').value || new Date().toISOString().split('T')[0];
+      // 獲取台北時間的今天 YYYY-MM-DD
+      const todayTaipei = new Date().toLocaleString('sv', { timeZone: 'Asia/Taipei' }).split(' ')[0];
+      const date = document.getElementById('adminSearchDate').value || todayTaipei;
       document.getElementById('adminSearchDate').value = date;
+      
       const logs = await api(`/attendance/all-records?date=${date}`);
-      const list = document.getElementById('allLogsList'); list.innerHTML = logs.length ? '' : '<div class="text-white text-center">No data</div>';
+      
+      const userLogs = {};
       logs.forEach(l => {
-        const color = l.action === '上班' ? 'text-orange-500' : (l.action === '請假' ? 'text-blue-500' : 'text-indigo-600');
-        const translatedAction = translations[currentLang].actions[l.action] || l.action;
-        list.innerHTML += `<div class="bg-white p-4 rounded-2xl border-4 border-black relative">
-          <div class="flex items-center gap-3"><span class="text-2xl font-black ${color}">${translatedAction}</span><span class="text-xl font-black">${l.userName}</span></div>
-          <div class="text-lg font-mono text-gray-600">${formatTime(l.time)}</div>
-          ${l.lat ? `<button onclick="showMap(${l.lat},${l.lng})" class="absolute top-4 right-4 text-2xl">📌</button>` : ''}
-        </div>`;
+        if (!userLogs[l.userName]) userLogs[l.userName] = [];
+        userLogs[l.userName].push(l);
       });
-    }
 
-    async function loadPendingLeaves() {
-      const leaves = await api('/attendance/leave/pending');
-      const list = document.getElementById('pendingLeaveList'); list.innerHTML = '';
-      leaves.forEach(l => {
-        const div = document.createElement('div'); div.className = 'bg-white p-4 rounded-2xl border-4 border-black flex flex-col gap-2';
-        div.innerHTML = `<b>ID: ${l.userId} (${l.startDate} ~ ${l.endDate})</b><p>${l.reason}</p>
-          <div class="flex gap-2"><button onclick="reviewLeave(${l.id},true)" class="flex-1 bg-green-500 p-2 rounded text-white">OK</button><button onclick="reviewLeave(${l.id},false)" class="flex-1 bg-red-500 p-2 rounded text-white">NO</button></div>`;
-        list.appendChild(div);
+      const datasets = [];
+      const labels = Object.keys(userLogs);
+      
+      // 🚀 核心修正：將任何時間轉為「看起來像台北時間」的本地 Date 物件
+      const toFakeLocal = (d) => {
+        const s = new Date(d).toLocaleString('sv', { timeZone: 'Asia/Taipei' });
+        return new Date(s.replace(' ', 'T')); // 轉成 YYYY-MM-DDTHH:mm:ss 的本地格式
+      };
+
+      labels.forEach((name) => {
+        const sorted = userLogs[name].sort((a, b) => new Date(a.time) - new Date(b.time));
+        let lastIn = null;
+        let lastAction = null;
+        
+        sorted.forEach(l => {
+          const lTime = toFakeLocal(l.time);
+          if (l.action === '上班' || l.action === '加班') {
+            if (!lastIn) {
+              lastIn = lTime;
+              lastAction = l.action;
+            } else {
+              // 🚀 核心邏輯：如果已有 lastIn，當前的「下班」或「加班」都會結束這一條
+              const color = (lastAction === '加班' || l.action === '加班') ? '#8b5cf6' : '#f97316';
+              datasets.push({ data: [{ x: [lastIn, lTime], y: name }], backgroundColor: color, borderRadius: 5 });
+              lastIn = null;
+              lastAction = null;
+            }
+          } else if (l.action === '下班' && lastIn) {
+            const color = lastAction === '加班' ? '#8b5cf6' : '#f97316';
+            datasets.push({ data: [{ x: [lastIn, lTime], y: name }], backgroundColor: color, borderRadius: 5 });
+            lastIn = null;
+            lastAction = null;
+          } else if (l.action === '請假') {
+            datasets.push({ data: [{ x: [new Date(date + 'T09:00:00'), new Date(date + 'T18:00:00')], y: name }], backgroundColor: '#3b82f6', borderRadius: 5 });
+          }
+        });
+        
+        if (lastIn && date === todayTaipei) {
+           const color = lastAction === '加班' ? '#fbbf24' : '#fbbf24'; // 進行中的統一黃色或紫色
+           datasets.push({ data: [{ x: [lastIn, toFakeLocal(new Date())], y: name }], backgroundColor: '#fbbf24', borderRadius: 5 });
+        }
+      });
+
+      if (ganttChart) ganttChart.destroy();
+      const ctx = document.getElementById('ganttChart').getContext('2d');
+      ganttChart = new Chart(ctx, {
+        type: 'bar',
+        data: { datasets },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { display: false },
+            tooltip: { 
+              callbacks: { 
+                label: (ctx) => { 
+                  const d = ctx.raw.x; 
+                  // 直接抓取 Date 物件的時分數字，避免二次轉換偏差
+                  const f = (val) => val.getHours().toString().padStart(2, '0') + ':' + val.getMinutes().toString().padStart(2, '0');
+                  return `${f(d[0])} - ${f(d[1])}`; 
+                } 
+              } 
+            } 
+          },
+          scales: {
+            x: { 
+              type: 'time', 
+              time: { unit: 'hour', displayFormats: { hour: 'HH:00' } }, 
+              min: date + 'T00:00:00', // 使用本地解析
+              max: date + 'T23:59:59',
+              ticks: { color: '#000', font: { weight: 'bold' } }
+            },
+            y: { ticks: { color: '#000', font: { weight: 'bold', size: 14 } } }
+          }
+        }
       });
     }
-    async function reviewLeave(id, ok) { await api(`/attendance/leave/${id}`, 'PATCH', { isApproved: ok }); loadPendingLeaves(); }
 
     async function executeExport() {
       const blob = await api(`/attendance/export?start=${document.getElementById('exportStartDate').value}&end=${document.getElementById('exportEndDate').value}`);
@@ -390,18 +535,17 @@
     let map, marker;
     function previewLocation() {
       const btn = document.getElementById('locBtn');
-      const oldText = btn.innerText;
       btn.disabled = true;
       btn.innerText = translations[currentLang].locing;
 
       navigator.geolocation.getCurrentPosition(pos => {
         btn.disabled = false;
-        btn.innerText = oldText;
+        applyLang(); // 👈 穩定恢復文字
         showMap(pos.coords.latitude, pos.coords.longitude);
       }, () => {
-        alert('GPS Failed');
+        alert(translations[currentLang].gpsFailed);
         btn.disabled = false;
-        btn.innerText = oldText;
+        applyLang();
       }, { enableHighAccuracy: true, timeout: 10000 });
     }
     function showMap(lat, lng) {
