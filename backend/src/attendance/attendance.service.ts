@@ -3,10 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Attendance } from './attendance.entity';
 import * as ExcelJS from 'exceljs';
+import { HolidayService } from './holiday.service';
 
 @Injectable()
 export class AttendanceService {
-  constructor(@InjectRepository(Attendance) private repo: Repository<Attendance>) { }
+  constructor(
+    @InjectRepository(Attendance) private repo: Repository<Attendance>,
+    private holidayService: HolidayService,
+  ) { }
 
   // 🛠️ 輔助方法：生成當天的開始與結束字串
   private getDayRange(date: string) {
@@ -27,7 +31,9 @@ export class AttendanceService {
   async clock(userId: number, action: string, lat?: number, lng?: number, leave?: any) {
     const todayStr = new Date().toLocaleString('sv', { timeZone: 'Asia/Taipei' }).split(' ')[0];
     const nowTaipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
-    const isWeekend = nowTaipei.getDay() === 0 || nowTaipei.getDay() === 6;
+    
+    // 🚀 使用 HolidayService 判斷是否為工作日 (國定假日會被判斷為非工作日，補班日會被判斷為工作日)
+    const isWorkDay = this.holidayService.isWorkDay(todayStr, nowTaipei);
 
     // 🚀 更直觀的判斷：獲取當天最後一筆非請假紀錄
     const todayLogs = await this.repo.createQueryBuilder('att')
@@ -40,8 +46,8 @@ export class AttendanceService {
     let overtimeValue = '';
     
     // 🚀 邏輯修正：
-    // 1. 如果不是「請假」，且滿足週末或當天已有 2 筆紀錄，則標註為加班
-    if (action !== '請假' && (isWeekend || todayLogs.length >= 2)) {
+    // 1. 如果不是「請假」，且滿足「非工作日」或「當天已有 2 筆紀錄 (第三、四次打卡)」，則標註為加班
+    if (action !== '請假' && (!isWorkDay || todayLogs.length >= 2)) {
       overtimeValue = '加班';
     }
 
