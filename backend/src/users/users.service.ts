@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -6,11 +6,25 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(
     @InjectRepository(User) private repo: Repository<User>,
     private jwt: JwtService
   ) {}
+
+  async onModuleInit() {
+    const adminCount = await this.repo.count();
+    if (adminCount === 0) {
+      const hashedPassword = await bcrypt.hash('mashiro0911', 10);
+      await this.repo.save({
+        name: 'ADMIN',
+        password: hashedPassword,
+        role: 'admin',
+        startDate: new Date().toISOString().split('T')[0],
+      });
+      console.log('🚀 Default ADMIN user created');
+    }
+  }
 
   // 🚀 註冊 (精簡版)
   async register(name: string, pwd: string, startDate: string, role: string, adminRole: string) {
