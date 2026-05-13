@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Attendance } from './attendance.entity';
@@ -7,6 +7,8 @@ import { HolidayService } from './holiday.service';
 
 @Injectable()
 export class AttendanceService {
+  private readonly logger = new Logger(AttendanceService.name);
+
   constructor(
     @InjectRepository(Attendance) private repo: Repository<Attendance>,
     private holidayService: HolidayService,
@@ -27,7 +29,7 @@ export class AttendanceService {
     return { status: isClockedIn ? '上班' : '下班', logs };
   }
 
-  // 2. 打卡與請假 (加入自動修復資料表功能)
+  // 2. 打卡與請假
   async clock(userId: number, action: string, lat?: number, lng?: number, leave?: any) {
     const todayStr = new Date().toLocaleString('sv', { timeZone: 'Asia/Taipei' }).split(' ')[0];
     const nowTaipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
@@ -51,11 +53,9 @@ export class AttendanceService {
       overtimeValue = '加班';
     }
 
-    // 2. 保持 finalAction 為前端傳入的動作（上班/下班/請假）
+    this.logger.debug(`[Clock] UserId: ${userId}, Action: ${action}, Overtime: ${overtimeValue}`);
 
-    console.log(`[DEBUG] LastAction: ${lastLog?.action || 'None'}, NewAction: ${action}, Overtime: ${overtimeValue}`);
-
-    const saveRecord = () => this.repo.save({
+    return this.repo.save({
       userId, 
       action: finalAction, 
       lat, 
@@ -65,32 +65,14 @@ export class AttendanceService {
       overtime: overtimeValue,
       time: new Date()
     });
-
-    try {
-      return await saveRecord();
-    } catch (error) {
-      // 如果報錯，嘗試重新同步資料表結構 (自動建立缺失的 Table)
-      console.log('檢測到資料庫異常，正在嘗試自動修復資料表...');
-      await this.repo.manager.connection.synchronize();
-      // 修復後重試一次
-      return await saveRecord();
-    }
   }
 
-  // 3. 歷史紀錄 (加入自動修復邏輯)
+  // 3. 歷史紀錄
   async getHistoryByDate(userId: number, date: string) {
     const { start, end } = this.getDayRange(date);
-    const query = () => this.repo.createQueryBuilder('att')
+    return this.repo.createQueryBuilder('att')
       .where('att.userId = :userId AND att.time BETWEEN :start AND :end', { userId, start, end })
       .orderBy('att.time', 'ASC').getMany();
-
-    try {
-      return await query();
-    } catch (error) {
-      console.log('檢測到查詢異常，嘗試自動同步資料結構...');
-      await this.repo.manager.connection.synchronize();
-      return await query();
-    }
   }
 
   // 🚀 修正：直接回傳資料庫的原始時間物件，不要在後端轉字串

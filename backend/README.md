@@ -1,98 +1,64 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🌍 Daka System - 跨國員工地理定位打卡系統
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+這是一個專為管理跨國籍員工設計的智慧打卡系統。除了基本的出勤管理，本專案特別針對**多語言環境**與**外勤地點驗證**進行了優化，並整合了政府 Open Data 實現自動化的假日判定。
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 核心亮點
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. 🌐 多國語系即時切換
+*   **支援語言**：繁體中文、越南語 (Tiếng Việt)、泰語 (ภาษาไทย)。
+*   **設計初衷**：降低非母語員工的操作門檻，減少溝通成本。
 
-## Project setup
+### 2. 📍 GPS 地理定位與防偽打卡
+*   **位置紀錄**：打卡時自動記錄經緯度，並整合 Leaflet 地圖可視化。
+*   **管理監控**：管理員可直接在後台查看員工打卡的實際地點，防止遠端虛假打卡。
 
-```bash
-$ npm install
+### 3. 🗓️ 智慧假日判斷 (政府 Open Data 整合)
+*   **自動同步**：整合「政府公務日曆」API，自動判定國定假日、彈性放假及補班日。
+*   **加班判定**：系統會自動根據日曆資訊，判定當日打卡是否屬於加班範疇。
+
+### 4. 📊 管理員可視化後台
+*   **動態甘特圖**：使用 Chart.js 展示員工當日出勤時間軸，方便快速審查異常紀錄。
+*   **報表匯出**：一鍵匯出 Excel 出勤報表，簡化薪資結算流程。
+
+---
+
+## 🛠️ 技術棧
+
+### 後端 (Backend)
+- **框架**: NestJS (Node.js)
+- **語言**: TypeScript
+- **資料庫**: PostgreSQL / TypeORM
+- **認證**: JWT (JSON Web Token)
+- **工具**: ExcelJS (報表生成), Axios (Open Data 抓取)
+
+### 前端 (Frontend)
+- **核心**: HTML5 / JavaScript (Vanilla JS)
+- **樣式**: Tailwind CSS (響應式設計)
+- **圖表**: Chart.js
+- **地圖**: Leaflet.js
+
+---
+
+## ⚙️ 快速啟動
+
+### 1. 環境變數設定
+請在 `backend/` 目錄下建立 `.env` 檔案，參考 `.env.example`：
+```env
+DATABASE_URL=你的資料庫連結
+JWT_SECRET=自定義密鑰
+ADMIN_PASSWORD=初始管理員密碼
 ```
 
-## Compile and run the project
-
+### 2. 安裝與執行
 ```bash
-# development
-$ npm run start
+# 進入後端目錄
+cd backend
 
-# watch mode
-$ npm run start:dev
+# 安裝依賴
+npm install
 
-# production mode
-$ npm run start:prod
+# 啟動開發伺服器
+npm run start:dev
 ```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

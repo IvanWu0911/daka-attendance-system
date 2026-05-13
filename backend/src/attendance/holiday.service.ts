@@ -1,8 +1,9 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 @Injectable()
 export class HolidayService implements OnModuleInit {
+  private readonly logger = new Logger(HolidayService.name);
   private holidayCache: Set<string> = new Set();
   // 增加 size 到 4000 確保能抓到多個年份的資料 (一年約 365 筆)
   private readonly apiUrl = 'https://data.ntpc.gov.tw/api/datasets/308DCD75-6434-45BC-A913-363595FC2B74/json?size=4000';
@@ -18,7 +19,7 @@ export class HolidayService implements OnModuleInit {
   // 抓取政府日曆資料 (包含國定假日與補班日)
   async updateHolidays() {
     try {
-      console.log('正在更新國定假日資料...');
+      this.logger.log('正在更新國定假日資料...');
       const response = await axios.get(this.apiUrl);
       const data = response.data;
 
@@ -30,9 +31,9 @@ export class HolidayService implements OnModuleInit {
           this.holidayCache.add(item.date.replace(/\//g, '-')); // 統一存為 YYYY-MM-DD
         }
       });
-      console.log(`假日資料更新完成，共載入 ${this.holidayCache.size} 個假日。`);
+      this.logger.log(`假日資料更新完成，共載入 ${this.holidayCache.size} 個假日。`);
     } catch (error) {
-      console.error('無法取得假日資料，將退回使用預設週末判斷', error.message);
+      this.logger.error('無法取得假日資料，將退回使用預設週末判斷', error.message);
     }
   }
 
