@@ -19,7 +19,15 @@ export class UsersService implements OnModuleInit {
   async onModuleInit() {
     const adminCount = await this.repo.count();
     if (adminCount === 0) {
-      const defaultPassword = this.configService.get<string>('ADMIN_PASSWORD') || 'admin123';
+      // 不提供預設密碼 —— 未設定 ADMIN_PASSWORD 就不建立帳號，
+      // 否則任何知道這份原始碼的人都能用固定密碼登入管理後台。
+      const defaultPassword = this.configService.get<string>('ADMIN_PASSWORD');
+      if (!defaultPassword) {
+        this.logger.error(
+          '未設定 ADMIN_PASSWORD 環境變數，略過建立初始 ADMIN 帳號。請設定後重新啟動。',
+        );
+        return;
+      }
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
       await this.repo.save({
         name: 'ADMIN',

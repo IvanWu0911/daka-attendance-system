@@ -1,64 +1,30 @@
-# 🌍 Daka System - 跨國員工地理定位打卡系統
+# daka-backend
 
-這是一個專為管理跨國籍員工設計的智慧打卡系統。除了基本的出勤管理，本專案特別針對**多語言環境**與**外勤地點驗證**進行了優化，並整合了政府 Open Data 實現自動化的假日判定。
+Daka System 的 NestJS 後端。專案總覽與功能說明見 [根目錄 README](../README.md)。
 
----
+**作者：[IvanWu0911](https://github.com/IvanWu0911)**
 
-## 🚀 核心亮點
+## 模組
 
-### 1. 🌐 多國語系即時切換
-*   **支援語言**：繁體中文、越南語 (Tiếng Việt)、泰語 (ภาษาไทย)。
-*   **設計初衷**：降低非母語員工的操作門檻，減少溝通成本。
+| 目錄 | 職責 |
+|---|---|
+| `src/users/` | 註冊／登入、JWT 簽發與 `AuthGuard`、角色權限（admin / employee）、啟動時建立初始 ADMIN |
+| `src/attendance/` | 打卡與請假、出勤查詢、Excel 報表匯出 |
+| `src/attendance/holiday.service.ts` | 串接政府公務日曆 API 判定國定假日／補班日，失敗時退回週末判斷 |
 
-### 2. 📍 GPS 地理定位與防偽打卡
-*   **位置紀錄**：打卡時自動記錄經緯度，並整合 Leaflet 地圖可視化。
-*   **管理監控**：管理員可直接在後台查看員工打卡的實際地點，防止遠端虛假打卡。
+## 指令
 
-### 3. 🗓️ 智慧假日判斷 (政府 Open Data 整合)
-*   **自動同步**：整合「政府公務日曆」API，自動判定國定假日、彈性放假及補班日。
-*   **加班判定**：系統會自動根據日曆資訊，判定當日打卡是否屬於加班範疇。
-
-### 4. 📊 管理員可視化後台
-*   **動態甘特圖**：使用 Chart.js 展示員工當日出勤時間軸，方便快速審查異常紀錄。
-*   **報表匯出**：一鍵匯出 Excel 出勤報表，簡化薪資結算流程。
-
----
-
-## 🛠️ 技術棧
-
-### 後端 (Backend)
-- **框架**: NestJS (Node.js)
-- **語言**: TypeScript
-- **資料庫**: PostgreSQL / TypeORM
-- **認證**: JWT (JSON Web Token)
-- **工具**: ExcelJS (報表生成), Axios (Open Data 抓取)
-
-### 前端 (Frontend)
-- **核心**: HTML5 / JavaScript (Vanilla JS)
-- **樣式**: Tailwind CSS (響應式設計)
-- **圖表**: Chart.js
-- **地圖**: Leaflet.js
-
----
-
-## ⚙️ 快速啟動
-
-### 1. 環境變數設定
-請在 `backend/` 目錄下建立 `.env` 檔案，參考 `.env.example`：
-```env
-DATABASE_URL=你的資料庫連結
-JWT_SECRET=自定義密鑰
-ADMIN_PASSWORD=初始管理員密碼
-```
-
-### 2. 安裝與執行
 ```bash
-# 進入後端目錄
-cd backend
-
-# 安裝依賴
 npm install
-
-# 啟動開發伺服器
-npm run start:dev
+npm run start:dev     # 開發模式（watch）
+npm run start:prod    # 執行 dist/main
+npm run build
+npm run lint
 ```
+
+## 環境變數
+
+複製 `.env.example` 為 `.env` 後填入：`DATABASE_URL`、`JWT_SECRET`、`ADMIN_PASSWORD`。
+
+`ADMIN_PASSWORD` 為必填 —— 未設定時 `onModuleInit` 會記錄錯誤並略過建立 ADMIN 帳號，
+而不是退回固定的預設密碼。
