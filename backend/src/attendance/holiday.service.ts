@@ -23,6 +23,14 @@ export class HolidayService implements OnModuleInit {
       const response = await axios.get(this.apiUrl);
       const data = response.data;
 
+      // 這支 API 在被上游 WAF 擋下時，仍會以 200 回傳一段 HTML 而非 JSON 陣列。
+      // 先確認型別，否則錯誤會以 'data.forEach is not a function' 出現，難以判讀。
+      if (!Array.isArray(data)) {
+        throw new Error(
+          `回應不是預期的陣列格式（可能被來源端拒絕）：${String(data).slice(0, 80)}`,
+        );
+      }
+
       this.holidayCache.clear();
       data.forEach((item: any) => {
         // isHoliday: '是' 代表放假 (包含週末、國定假日)

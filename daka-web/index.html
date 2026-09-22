@@ -552,7 +552,12 @@
       toggleModal('mapModal', true);
       if (!map) {
         map = L.map('map').setView([lat, lng], 17);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+        // OpenStreetMap 圖磚，無須申請金鑰；
+        // 原本的 CARTO basemap 已改為需要 API key，未帶金鑰時整張底圖會蓋上浮水印。
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
       } else { map.setView([lat, lng], 17); }
       if (marker) map.removeLayer(marker);
       marker = L.marker([lat, lng]).addTo(map);

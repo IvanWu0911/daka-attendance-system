@@ -5,6 +5,8 @@
 
 **作者：[IvanWu0911](https://github.com/IvanWu0911)** ｜ NestJS · TypeScript · PostgreSQL · Vanilla JS
 
+![管理後台：當日出勤時間軸](docs/screenshots/admin-gantt.png)
+
 ---
 
 ## 為什麼做這個
@@ -27,9 +29,34 @@
 串接政府公務日曆 API 自動判定國定假日、彈性放假與補班日，並據此判斷當日打卡是否屬於加班。
 API 取得失敗時退回週末判斷，不會因外部服務中斷而停擺。
 
+> 註：該筆公開資料的端點目前被其來源端的 WAF 擋下（以 200 回傳 HTML 而非 JSON），
+> 系統會記錄錯誤並改用週末判斷。此路徑的防禦與降級行為即為此情境而設計。
+
 ### 管理員後台
 - Chart.js 動態甘特圖呈現當日員工出勤時間軸，快速找出異常紀錄
 - ExcelJS 一鍵匯出出勤報表，供薪資結算使用
+
+## 系統畫面
+
+| 登入（選擇身分） | 員工打卡 |
+|---|---|
+| ![登入](docs/screenshots/login.png) | ![打卡](docs/screenshots/employee-clock.png) |
+
+**多國語系** —— 同一畫面切換語言，時間格式也跟著地區慣例改變：
+
+| 越南語 | 泰語 |
+|---|---|
+| ![越南語](docs/screenshots/employee-vi.png) | ![泰語](docs/screenshots/employee-th.png) |
+
+**GPS 定位** —— 打卡位置以 Leaflet 地圖呈現：
+
+![地圖](docs/screenshots/employee-map.png)
+
+**管理後台** —— 當日出勤時間軸（黃色為尚未下班）與員工管理：
+
+| 出勤甘特圖 | 員工管理 |
+|---|---|
+| ![甘特圖](docs/screenshots/admin-gantt.png) | ![員工管理](docs/screenshots/admin-staff.png) |
 
 ## 技術棧
 
