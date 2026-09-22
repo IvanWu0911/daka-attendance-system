@@ -3,7 +3,9 @@
 > 專為管理跨國籍員工設計的出勤系統：以 GPS 定位驗證外勤打卡、
 > 介面支援中／越／泰三語即時切換，並串接政府公開資料自動判定國定假日與補班日。
 
-**作者：[IvanWu0911](https://github.com/IvanWu0911)** ｜ NestJS · TypeScript · PostgreSQL · Vanilla JS
+**個人專案 ｜ [IvanWu0911](https://github.com/IvanWu0911) 獨立完成設計、開發與部署**
+
+NestJS · TypeScript · PostgreSQL · Vanilla JS
 
 ![管理後台：當日出勤時間軸](docs/screenshots/admin-gantt.png)
 
